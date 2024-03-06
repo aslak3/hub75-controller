@@ -20,32 +20,22 @@ module controller #(parameter BITS_PER_PIXEL=0)
     localparam BITS_PER_RGB = BITS_PER_PIXEL / 4;
     localparam BITS_PER_RGB_CLOG2 = $clog2(BITS_PER_RGB);
 
-    reg [4:0] clk_counter;
+    reg [1:0] clk_counter;
     always @ (posedge clk) begin
-        clk_counter <= clk_counter + 5'h1;
+        clk_counter <= clk_counter + 2'h1;
     end
     wire slow_clk = clk_counter[1];
-
-    // reg reset = 1'b1;
-    // reg [23:0] reset_counter = 24'h0;
-    // always @ (posedge slow_clk) begin
-    //     if (reset_counter != 24'hffffff) begin
-    //         reset_counter <= reset_counter + 1;
-    //     end else begin
-    //          reset = ~n_reset;
-    //     end
-    // end
 
     wire reset = ~n_reset;
 
     wire [BITS_PER_PIXEL-1:0] write_data;
     wire write_pixel_clk;
-    reg [10:0] write_addr; // top bit is the double-buffer flipper
 
     spi_slave #(BITS_PER_PIXEL) spi_slave (
         reset, spi_clk, spi_mosi, write_data, write_pixel_clk
     );
 
+    reg [10:0] write_addr; // top bit is the double-buffer flipper and is provided by spi_ss
     always @ (posedge spi_ss, posedge write_pixel_clk) begin
         if (spi_ss == 1'b1) begin
             write_addr <= 11'b11111111111;
@@ -88,6 +78,7 @@ module controller #(parameter BITS_PER_PIXEL=0)
             row_addr <= 4'b0000;
             column_addr <= 10'b0000000000;
             oe_strobe_column_addr <= 10'b0000011111;
+            read_state = READ_STATE_PIXELS;
         end else begin
             case (read_state)
                 READ_STATE_PIXELS: begin
