@@ -48,7 +48,7 @@ module controller #(parameter BITS_PER_PIXEL=0)
 
     always @ (posedge spi_ss, posedge write_pixel_clk) begin
         if (spi_ss == 1'b1) begin
-            write_addr <= 11'b0;
+            write_addr <= 11'b11111111111;
         end else begin
             write_addr <= write_addr + 11'b1;
         end
