@@ -16,14 +16,13 @@ module controller #(parameter BITS_PER_PIXEL=0)
         output reg user_led
     );
 
-    localparam BITS_PER_PIXEL_CLOG2 = $clog2(BITS_PER_PIXEL);
     localparam BITS_PER_RGB = BITS_PER_PIXEL / 4;
-    localparam BITS_PER_RGB_CLOG2 = $clog2(BITS_PER_RGB);
 
     reg [1:0] clk_counter;
     always @ (posedge clk) begin
         clk_counter <= clk_counter + 2'h1;
     end
+    // 12.5MHz on my board
     wire slow_clk = clk_counter[1];
 
     wire reset = ~n_reset;
@@ -37,6 +36,9 @@ module controller #(parameter BITS_PER_PIXEL=0)
 
     reg [10:0] write_addr; // top bit is the double-buffer flipper and is provided by spi_ss
     always @ (posedge spi_ss, posedge write_pixel_clk) begin
+        // On the rising edige of spi_ss, clear the address. This acts as a reset of sorts, such that if
+        // the FPGA is programmed with the computer running, the screen will quickly get into a
+        // known state.
         if (spi_ss == 1'b1) begin
             write_addr <= 11'b11111111111;
         end else begin
@@ -59,8 +61,8 @@ module controller #(parameter BITS_PER_PIXEL=0)
         READ_STATE_PIXELS = 0,
         READ_STATE_SET_LATCH_DELAY = 1,
         READ_STATE_SET_LATCH = 2,
-        READ_OE_STROBE = 3,
-        READ_END_OF_ROW = 4,
+        READ_STATE_OE_STROBE = 3,
+        READ_STATE_END_OF_ROW = 4,
         READ_STATE_NEXT_LINE = 5;
     integer read_state = READ_STATE_PIXELS;
 
@@ -78,7 +80,7 @@ module controller #(parameter BITS_PER_PIXEL=0)
             row_addr <= 4'b0000;
             column_addr <= 10'b0000000000;
             oe_strobe_column_addr <= 10'b0000011111;
-            read_state = READ_STATE_PIXELS;
+            read_state <= READ_STATE_PIXELS;
         end else begin
             case (read_state)
                 READ_STATE_PIXELS: begin
@@ -110,20 +112,20 @@ module controller #(parameter BITS_PER_PIXEL=0)
                 READ_STATE_SET_LATCH: begin
                     hub75_latch <= 1'b1;
                     column_addr <= 10'b0000000000;
-                    read_state <= READ_OE_STROBE;
+                    read_state <= READ_STATE_OE_STROBE;
                 end
 
-                READ_OE_STROBE: begin
+                READ_STATE_OE_STROBE: begin
                     hub75_latch <= 1'b0;
                     hub75_oe <= 1'b0;
                     column_addr <= column_addr + 10'b0000000001;
                     if (column_addr == oe_strobe_column_addr) begin
                         hub75_oe <= 1'b1;
-                        read_state <= READ_END_OF_ROW;
+                        read_state <= READ_STATE_END_OF_ROW;
                     end
                 end
 
-                READ_END_OF_ROW: begin
+                READ_STATE_END_OF_ROW: begin
                     bit_count <= bit_count + 1;
                     oe_strobe_column_addr <= { oe_strobe_column_addr[8:0], 1'b1 };
                     if (bit_count == BITS_PER_RGB - 1) begin
@@ -149,12 +151,13 @@ module controller #(parameter BITS_PER_PIXEL=0)
 
     assign hub75_addr = row_addr;
     assign hub75_clk = run_hub75_clk ? slow_clk : 1'b0;
+    // We could one day use this to indicate something  back to the computer
     assign spi_miso = 1'b0;
 
-    // Just for testing
+    // So the LED can be used to show that the FPGA has a design loaded
     reg [23:0] counter;
     always @ (posedge slow_clk) begin
         counter <= counter + 1;
     end
-    assign user_led = counter[22];
+    assign user_led = counter[23];
 endmodule

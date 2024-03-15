@@ -11,8 +11,9 @@ module tb;
 
     spi_slave #(BITS_PER_PIXEL) dut ( reset, spi_clk, spi_mosi, data, pixel_clk);
 
-    // TODO: Parameterise
-    parameter [32+32+32-1:0] test_input = 96'hdeadbeefcabba6e000000000;
+    // TODO: Parameterise, test is only meaningful with 16bpp at the moment, though the dut should already work with
+    // any bpp.
+    parameter [32+32+32-1:0] test_input = 96'hd0e0a0d0b0e0e0f000000000;
 
     integer word_counter;
     integer bit_counter;
