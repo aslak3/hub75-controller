@@ -9,7 +9,7 @@ module sync_pdp_ram #(parameter BITS_PER_PIXEL=0)
         input [9:0]                 read_addr,
         output [BITS_PER_PIXEL-1:0] read_data_top,
         output [BITS_PER_PIXEL-1:0] read_data_bottom,
-        input                        read_en
+        input                       read_en
     );
 
     reg [BITS_PER_PIXEL-1:0] mem_top [64*16*2];
@@ -33,6 +33,6 @@ module sync_pdp_ram #(parameter BITS_PER_PIXEL=0)
        end
     end
 
-    assign read_data_top = read_en ? tmp_data_top : {BITS_PER_PIXEL{1'bz}};
-    assign read_data_bottom = read_en ? tmp_data_bottom : {BITS_PER_PIXEL{1'bz}};
+    assign read_data_top = read_en ? tmp_data_top : {BITS_PER_PIXEL{1'b1}};
+    assign read_data_bottom = read_en ? tmp_data_bottom : {BITS_PER_PIXEL{1'b1}};
 endmodule

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -23,13 +24,14 @@ func output_bmp_as_raw(filename string) {
 }
 
 func main() {
-	args := os.Args[1:]
+	inputFilenamePtr := flag.String("input-filename", "", "A 64 x 32 bmp file")
 
-	if len(args) < 1 {
-		fmt.Fprintf(os.Stderr, "Filename not specified\n")
+	flag.Parse()
+
+	if *inputFilenamePtr == "" {
+		fmt.Fprintf(os.Stderr, "--input-filename not specified\n")
 		os.Exit(1)
 	}
-	input_filename := args[0]
 
-	output_bmp_as_raw(input_filename)
+	output_bmp_as_raw(*inputFilenamePtr)
 }

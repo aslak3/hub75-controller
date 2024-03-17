@@ -1,4 +1,4 @@
-module aslak.net/raw-to-image
+module aslak.net/unscaled-to-image
 
 go 1.19
 

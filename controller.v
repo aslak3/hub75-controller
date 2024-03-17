@@ -18,9 +18,9 @@ module controller #(parameter BITS_PER_PIXEL=0)
 
     localparam BITS_PER_RGB = BITS_PER_PIXEL / 4;
 
-    reg [1:0] clk_counter;
+    reg [1:0] clk_counter = 2'b00;
     always @ (posedge clk) begin
-        clk_counter <= clk_counter + 2'h1;
+        clk_counter <= clk_counter + 2'b01;
     end
     // 12.5MHz on my board
     wire slow_clk = clk_counter[1];
@@ -34,8 +34,8 @@ module controller #(parameter BITS_PER_PIXEL=0)
         reset, spi_clk, spi_mosi, write_data, write_pixel_clk
     );
 
-    reg [10:0] write_addr; // top bit is the double-buffer flipper and is provided by spi_ss
-    always @ (posedge spi_ss, posedge write_pixel_clk) begin
+    reg [10:0] write_addr = 11'b11111111111; // top bit is the double-buffer flipper and is provided by spi_ss
+    always @ (posedge spi_ss, negedge write_pixel_clk) begin
         // On the rising edige of spi_ss, clear the address. This acts as a reset of sorts, such that if
         // the FPGA is programmed with the computer running, the screen will quickly get into a
         // known state.
@@ -68,7 +68,7 @@ module controller #(parameter BITS_PER_PIXEL=0)
 
     reg run_hub75_clk = 1'b0;
     integer bit_count = 0;
-    reg [9:0] oe_strobe_column_addr;
+    reg [9:0] oe_strobe_column_addr = 10'b0000000000;
     always @ (posedge reset, negedge slow_clk) begin
         if (reset == 1'b1) begin
             run_hub75_clk <= 1'b0;
@@ -131,7 +131,7 @@ module controller #(parameter BITS_PER_PIXEL=0)
                     if (bit_count == BITS_PER_RGB - 1) begin
                         bit_count <= 0;
                         oe_strobe_column_addr <= 10'b0000011111;
-                        row_addr <= row_addr + 4'h1; 
+                        row_addr <= row_addr + 4'h1;
                     end
                     read_state <= READ_STATE_NEXT_LINE;
                 end
@@ -155,7 +155,7 @@ module controller #(parameter BITS_PER_PIXEL=0)
     assign spi_miso = 1'b0;
 
     // So the LED can be used to show that the FPGA has a design loaded
-    reg [23:0] counter;
+    reg [23:0] counter = 24'h000000;
     always @ (posedge slow_clk) begin
         counter <= counter + 1;
     end

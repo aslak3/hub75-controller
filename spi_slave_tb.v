@@ -33,13 +33,13 @@ module tb;
         reset = 1'b0;
 
         #period
-            for (bit_counter = 0; bit_counter < 32+32+32; bit_counter++) begin
-                spi_clk = 1'b0;
-                spi_mosi = test_input[32+32+32 - 1 - bit_counter];
-                #period;
+        for (bit_counter = 0; bit_counter < 32+32+32; bit_counter++) begin
+            spi_clk = 1'b0;
+            spi_mosi = test_input[32+32+32 - 1 - bit_counter];
+            #period;
 
-                spi_clk = 1'b1;
-                #period;
+            spi_clk = 1'b1;
+            #period;
         end
     end
 
